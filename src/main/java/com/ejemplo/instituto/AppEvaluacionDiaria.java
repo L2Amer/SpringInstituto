@@ -5,6 +5,8 @@ import java.time.LocalDate;
 import java.util.List;
 import java.util.Scanner;
 
+import org.springframework.cglib.core.Local;
+
 import com.ejemplo.instituto.dao.AlumnoDAO;
 import com.ejemplo.instituto.dao.AlumnoDAOImpl;
 import com.ejemplo.instituto.dao.RegistroDAO;
@@ -66,9 +68,19 @@ public class AppEvaluacionDiaria {
                     System.out.print("Fecha de realización (yyyy-MM-dd): ");
                     String fechaStr = sc.nextLine();
 
-                    String[] fechaSplit = fechaStr.split("-");
+                    LocalDate fecha = null;
+                    LocalDate fechaActual = null;
+                    boolean haInsertadoFecha = true;
 
-                    LocalDate fecha = LocalDate.of(Integer.valueOf(fechaSplit[0]), Integer.valueOf(fechaSplit[1]), Integer.valueOf(fechaSplit[2]));
+                    if (!fechaStr.isBlank()) {
+                        String[] fechaSplit = fechaStr.split("-");
+
+                        fecha = LocalDate.of(Integer.valueOf(fechaSplit[0]), Integer.valueOf(fechaSplit[1]),
+                                Integer.valueOf(fechaSplit[2]));
+                    } else {
+                        haInsertadoFecha = false;
+                        fechaActual = LocalDate.now();
+                    }
 
                     System.out.print("Puntuación (0 - 5 / vacío si no tiene aún): ");
                     String puntuacionInput = sc.nextLine();
@@ -79,18 +91,20 @@ public class AppEvaluacionDiaria {
                         puntuacion = Integer.parseInt(puntuacionInput);
                     }
 
-                    if (registroDAO.insertar(new RegistroDTO(nombre, fecha, id_alumno, puntuacion))) {
-                        System.out.println("\nRegistro insertado correctamente.");
+                    if (haInsertadoFecha) {
+                        insertarConFecha(registroDAO, id_alumno, nombre, fecha, puntuacion);
                     } else {
-                        System.out.println("\nError al insertar el registro.");
+                        insertarConFecha(registroDAO, id_alumno, nombre, fechaActual, puntuacion);
                     }
+
                 }
                 case 6 -> {
                     // listarAlumnoConRegistrosYMedia();
                 }
                 case 7 -> {
                     // listarAlumnadoYCalificacionDeCadaUno();
-                } case 0 -> {
+                }
+                case 0 -> {
                     System.out.println("Saliendo del programa");
                 }
 
@@ -99,5 +113,14 @@ public class AppEvaluacionDiaria {
         } while (menu != 0);
 
         sc.close();
+    }
+
+    private static void insertarConFecha(RegistroDAO registroDAO, int id_alumno, String nombre, LocalDate fecha,
+            Integer puntuacion) {
+        if (registroDAO.insertar(new RegistroDTO(nombre, fecha, id_alumno, puntuacion))) {
+            System.out.println("\nRegistro insertado correctamente.");
+        } else {
+            System.out.println("\nError al insertar el registro.");
+        }
     }
 }
